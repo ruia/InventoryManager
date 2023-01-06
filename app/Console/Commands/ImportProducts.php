@@ -53,6 +53,7 @@ class ImportProducts extends Command
                 }
                 closedir($handle);
                 foreach (array_slice($files, 2) as $file) {
+                    #TODO check if last char of $path is \ or not
                     $this->ProductFileImport($path . '\\' . $file);
                 }
                 break;          
@@ -82,7 +83,7 @@ class ImportProducts extends Command
                 if (!empty($line)) {
                     print("Starting import of: " . $filename . "\n");
                     $details = explode(';', $line);
-                    $product_code = $fornecedor . "-" . trim($details[0]);
+                    $product_code = strtoupper($fornecedor . "-" . trim($details[0]));
                     $product_description = preg_replace(array('/\s{2,}/', '/[\t\n]/'), ' ', trim($details[1]));
                     $product_ean = trim($details[2]);
                     if (empty($product_ean)) {
