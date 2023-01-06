@@ -14,9 +14,9 @@ class CreateProductsTable extends Migration
     public function up()
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->string('ProductCode')->primary();
+            $table->string('ProductCode')->primary()->unique();
             $table->string('ProductDescription');
-            $table->string('ProductNumberCode');
+            $table->string('ProductNumberCode')->unique();
             $table->string('ProductCategory')->default('M');
             $table->string('UnitOfMeasure')->default('Unidade');
             $table->decimal('PriceCost', 10,4);

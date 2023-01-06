@@ -13,5 +13,12 @@ class Product extends Model
 
     protected $keyType = 'string';
 
+    protected $fillable = [
+        'ProductCode',
+        'ProductDescription',
+        'ProductNumberCode',
+        'PriceCost'
+    ];
+
 
 }
