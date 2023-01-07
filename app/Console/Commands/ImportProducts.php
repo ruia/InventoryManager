@@ -54,7 +54,9 @@ class ImportProducts extends Command
                 closedir($handle);
                 foreach (array_slice($files, 2) as $file) {
                     #TODO check if last char of $path is \ or not
-                    $this->ProductFileImport($path . '\\' . $file);
+                    if (($file != "existingProducts.csv") && ($file != "updatedProducts.csv")) {
+                        $this->ProductFileImport($path . '\\' . $file);
+                    }
                 }
                 break;          
             default:
@@ -70,6 +72,7 @@ class ImportProducts extends Command
             $fn = fopen($filename, 'r');
             $lines = [];
             $existingProducts = [];
+            $updatedProducts = [];
 
             while (! feof($fn)){
                 $lines[] = fgets($fn);
@@ -79,9 +82,9 @@ class ImportProducts extends Command
             array_shift($lines);
 
             $fornecedor = basename($filename, ".csv");
+            print("Starting import of: " . $filename . "\n");
             foreach ($lines as $line) {
                 if (!empty($line)) {
-                    print("Starting import of: " . $filename . "\n");
                     $details = explode(';', $line);
                     $product_code = strtoupper($fornecedor . "-" . trim($details[0]));
                     $product_description = preg_replace(array('/\s{2,}/', '/[\t\n]/'), ' ', trim($details[1]));
@@ -89,25 +92,36 @@ class ImportProducts extends Command
                     if (empty($product_ean)) {
                         $product_ean = $product_code;
                     }
-                    $product_price = str_replace(',','.', trim($details[3]));
+                    $product_price = floatval(str_replace(',','.', trim($details[3])));
                     $prod = Product::where('ProductNumberCode', $product_ean)->first();
                     if ($prod == null) {
                         Product::create([
                             'ProductCode' => $product_code,
                             'ProductDescription' => $product_description,
                             'ProductNumberCode' => $product_ean,
-                            'PriceCost' => floatval($product_price),
+                            'PriceCost' => $product_price,
                         ]);
                         print("Inserted product: " . $product_code . "\n");
                     } else {
-                        $existingProducts[] = $line;
+                        if ($prod->PriceCost < $product_price) {
+                            $prod->PriceCost = $product_price;
+                            $prod->ProductCode = $product_code;
+                            $prod->save();
+                            $updatedProducts[] = $line;
+                            print("Updated product: " . $product_code . "\n");
+                        } else {
+                            $existingProducts[] = $line;
+                        }
                     }
                 }
             }
             print("Finished import of: " . $filename . "\n");
             if (!empty($existingProducts)) {
+                #TODO clear/delete each file each command call?
                 $existingProductsFile = pathinfo($filename)['dirname'] . "\\existingProducts.csv";
+                $updatedProductsFile = pathinfo($filename)['dirname'] . "\\updatedProducts.csv";
                 file_put_contents($existingProductsFile, $existingProducts, FILE_APPEND);
+                file_put_contents($updatedProductsFile, $updatedProducts, FILE_APPEND);
             }
         }
     }
