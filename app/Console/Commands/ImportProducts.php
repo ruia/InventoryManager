@@ -103,7 +103,7 @@ class ImportProducts extends Command
                         ]);
                         print("Inserted product: " . $product_code . "\n");
                     } else {
-                        if ($prod->PriceCost < $product_price) {
+                        if ($prod->PriceCost <= $product_price) {
                             $prod->PriceCost = $product_price;
                             $prod->ProductCode = $product_code;
                             $prod->save();
